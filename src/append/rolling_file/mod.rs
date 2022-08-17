@@ -89,7 +89,10 @@ pub struct LogWriter {
 impl io::Write for LogWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.file.write(buf).map(|n| {
-            self.len += n as u64;
+            match self.file.get_ref().metadata().map(|meta| meta.len()).ok() {
+                Some(file_size) => self.len = file_size,
+                None => self.len += n as u64
+            }
             n
         })
     }
