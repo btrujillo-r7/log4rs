@@ -168,6 +168,7 @@ where
     P: AsRef<Path>,
     Q: AsRef<Path>,
 {
+    println!("moving {} to {}", src.as_ref().display(), dst.as_ref().display());
     // first try a rename
     match fs::rename(src.as_ref(), dst.as_ref()) {
         Ok(()) => return Ok(()),
