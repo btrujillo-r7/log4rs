@@ -90,7 +90,7 @@ pub struct LogWriter {
 impl io::Write for LogWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.file.write(buf).map(|n| {
-            if self.check_counter % 5 == 0 {
+            if self.check_counter % 10 == 0 {
                 match self.file.get_ref().metadata().map(|meta| meta.len()).ok() {
                     Some(file_size) => self.len = file_size,
                     None => self.len += n as u64
@@ -98,7 +98,7 @@ impl io::Write for LogWriter {
             } else {
                 self.len += n as u64
             }
-            // self.check_counter += 1;
+            self.check_counter += 1;
             n
         })
     }
