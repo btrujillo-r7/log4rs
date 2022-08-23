@@ -89,7 +89,6 @@ pub struct FixedWindowRoller {
     count: u32,
     #[cfg(feature = "background_rotation")]
     cond_pair: Arc<(Mutex<bool>, Condvar)>,
-    lockfile: PathBuf,
 }
 
 impl FixedWindowRoller {
@@ -102,11 +101,6 @@ impl FixedWindowRoller {
 impl Roll for FixedWindowRoller {
     #[cfg(not(feature = "background_rotation"))]
     fn roll(&self, file: &Path) -> anyhow::Result<()> {
-        let mut lockfile = fslock::LockFile::open(&self.lockfile)?;
-        if !lockfile.try_lock()? {
-            return Ok(()) // another process is already rolling
-        }
-
         if self.count == 0 {
             return fs::remove_file(file).map_err(Into::into);
         }
@@ -168,7 +162,7 @@ where
     P: AsRef<Path>,
     Q: AsRef<Path>,
 {
-    println!("moving {} to {}", src.as_ref().display(), dst.as_ref().display());
+    // println!("( {} ) moving {} ({}) to {} ({})", std::process::id(), src.as_ref().display(), std::fs::metadata(&src).map(|m| m.len()).unwrap_or(0), dst.as_ref().display(), std::fs::metadata(&dst).map(|m| m.len()).unwrap_or(0));
     // first try a rename
     match fs::rename(src.as_ref(), dst.as_ref()) {
         Ok(()) => return Ok(()),
@@ -289,7 +283,6 @@ impl FixedWindowRollerBuilder {
             count,
             #[cfg(feature = "background_rotation")]
             cond_pair: Arc::new((Mutex::new(true), Condvar::new())),
-            lockfile: PathBuf::from(pattern).with_extension("lock"),
         })
     }
 }

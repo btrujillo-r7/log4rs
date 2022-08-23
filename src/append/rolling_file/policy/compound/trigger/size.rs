@@ -115,7 +115,11 @@ impl SizeTrigger {
 
 impl Trigger for SizeTrigger {
     fn trigger(&self, file: &LogFile) -> anyhow::Result<bool> {
-        Ok(file.len_estimate() > self.limit)
+        // if file.len_fs() > self.limit {
+        //     println!("( {} ) File size: {}, Limit: {}", std::process::id(), file.len_estimate(), self.limit);
+        //     println!("( {} ) Actual file size: {}", std::process::id(), file.len_fs());
+        // }
+        Ok(file.len_fs() > self.limit)
     }
 }
 

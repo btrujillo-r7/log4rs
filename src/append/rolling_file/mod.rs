@@ -90,8 +90,8 @@ impl io::Write for LogWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.file.write(buf).map(|n| {
             match self.file.get_ref().metadata().map(|meta| meta.len()).ok() {
-                Some(file_size) => self.len = file_size,
-                None => self.len += n as u64
+                Some(file_size) => {self.len = file_size;},
+                None => {self.len += n as u64;}
             }
             n
         })
@@ -151,6 +151,11 @@ impl<'a> LogFile<'a> {
     pub fn roll(&mut self) {
         *self.writer = None;
     }
+
+    /// Returns the log file's actual size as reported by the file system.
+    pub fn len_fs(&self) -> u64 {
+        std::fs::metadata(&self.path).map(|meta| meta.len()).unwrap_or(0)
+    }
 }
 
 /// An appender which archives log files in a configurable strategy.
@@ -163,6 +168,7 @@ pub struct RollingFileAppender {
     append: bool,
     encoder: Box<dyn Encode>,
     policy: Box<dyn policy::Policy>,
+    lockfile: PathBuf,
 }
 
 impl Append for RollingFileAppender {
@@ -261,6 +267,7 @@ impl RollingFileAppenderBuilder {
         P: AsRef<Path>,
     {
         let path = super::env_util::expand_env_vars(path.as_ref().to_path_buf());
+        let lockfile = path.with_extension("lock");
         let appender = RollingFileAppender {
             writer: Mutex::new(None),
             path,
@@ -269,6 +276,7 @@ impl RollingFileAppenderBuilder {
                 .encoder
                 .unwrap_or_else(|| Box::new(PatternEncoder::default())),
             policy,
+            lockfile,
         };
 
         if let Some(parent) = appender.path.parent() {
