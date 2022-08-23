@@ -13,6 +13,9 @@ pub mod size;
 pub trait Trigger: fmt::Debug + Send + Sync + 'static {
     /// Determines if the active log file should be rolled over.
     fn trigger(&self, file: &LogFile) -> anyhow::Result<bool>;
+
+    /// double check for the multiprocess rolling case to prevent a race condition
+    fn verify(&self, file: &LogFile) -> bool;
 }
 
 #[cfg(feature = "config_parsing")]

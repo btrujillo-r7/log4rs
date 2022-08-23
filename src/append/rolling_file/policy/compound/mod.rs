@@ -101,15 +101,12 @@ impl CompoundPolicy {
 
 impl Policy for CompoundPolicy {
     fn process(&self, log: &mut LogFile) -> anyhow::Result<()> {
-        let mut lockfile = fslock::LockFile::open(&log.path.with_extension("lock"))?;
-        if !lockfile.try_lock()? {
-            log.roll();
-             // Another process will roll the files
-            return Ok(())
-        }
         if self.trigger.trigger(log)? {
             // println!("[ {} ] ( {} ) Rolling", chrono::Local::now().format("%Y-%m-%d][%H:%M:%S.%f"), std::process::id());
             log.roll();
+            if !self.trigger.verify(log) {
+                return Ok(())
+            }
             self.roller.roll(log.path())?;
         }
         Ok(())

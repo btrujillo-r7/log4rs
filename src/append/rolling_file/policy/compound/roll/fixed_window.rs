@@ -101,6 +101,11 @@ impl FixedWindowRoller {
 impl Roll for FixedWindowRoller {
     #[cfg(not(feature = "background_rotation"))]
     fn roll(&self, file: &Path) -> anyhow::Result<()> {
+        let mut lockfile = fslock::LockFile::open(&file.with_extension("lock"))?;
+        if !lockfile.try_lock()? {
+            return Ok(()) // Another process is already rolling
+        }
+
         if self.count == 0 {
             return fs::remove_file(file).map_err(Into::into);
         }

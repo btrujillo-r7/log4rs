@@ -121,6 +121,15 @@ impl Trigger for SizeTrigger {
         // }
         Ok(file.len_fs() > self.limit)
     }
+
+    fn verify (&self, file: &LogFile) -> bool {
+        //check to see if another process rolled the file and we're pointing at a smaller file now
+        let size = ::std::fs::metadata(file.path).map(|meta| meta.len()).ok();
+        match size {
+            Some(size) => size >= self.limit,
+            _ => false
+        }
+    }
 }
 
 /// A deserializer for the `SizeTrigger`.

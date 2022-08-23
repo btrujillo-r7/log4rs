@@ -26,6 +26,7 @@ fn write_benchmark(c: &mut Criterion) {
     let mut writer = LogWriter {
         file: BufWriter::new(file),
         len: 0,
+        check_counter: 0,
     };
     c.bench_function("::append::rolling_file::LogWriter::write", move |b| b.iter(|| {
         writer.write("This is a log message".as_bytes()).unwrap();

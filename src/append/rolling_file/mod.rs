@@ -84,15 +84,21 @@ impl<'de> serde::Deserialize<'de> for Policy {
 pub struct LogWriter {
     pub file: BufWriter<File>,
     pub len: u64,
+    pub check_counter: u64,
 }
 
 impl io::Write for LogWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.file.write(buf).map(|n| {
-            match self.file.get_ref().metadata().map(|meta| meta.len()).ok() {
-                Some(file_size) => {self.len = file_size;},
-                None => {self.len += n as u64;}
+            if self.check_counter % 5 == 0 {
+                match self.file.get_ref().metadata().map(|meta| meta.len()).ok() {
+                    Some(file_size) => self.len = file_size,
+                    None => self.len += n as u64
+                }
+            } else {
+                self.len += n as u64
             }
+            // self.check_counter += 1;
             n
         })
     }
@@ -222,6 +228,7 @@ impl RollingFileAppender {
             *writer = Some(LogWriter {
                 file: BufWriter::with_capacity(1024, file),
                 len,
+                check_counter: 0,
             });
         }
 
