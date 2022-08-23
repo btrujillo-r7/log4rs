@@ -81,9 +81,9 @@ impl<'de> serde::Deserialize<'de> for Policy {
 }
 
 #[derive(Debug)]
-struct LogWriter {
-    file: BufWriter<File>,
-    len: u64,
+pub struct LogWriter {
+    pub file: BufWriter<File>,
+    pub len: u64,
 }
 
 impl io::Write for LogWriter {
@@ -104,8 +104,8 @@ impl encode::Write for LogWriter {}
 /// Information about the active log file.
 #[derive(Debug)]
 pub struct LogFile<'a> {
-    writer: &'a mut Option<LogWriter>,
-    path: &'a Path,
+    pub writer: &'a mut Option<LogWriter>,
+    pub path: &'a Path,
     len: u64,
 }
 
